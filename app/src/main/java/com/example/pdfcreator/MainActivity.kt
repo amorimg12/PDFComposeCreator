@@ -11,6 +11,9 @@ import android.os.Bundle
 import android.os.Environment
 import android.util.AttributeSet
 import android.view.View
+import android.view.View.MeasureSpec
+import android.view.ViewGroup
+import android.view.ViewGroup.MarginLayoutParams
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -18,13 +21,13 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Done
@@ -81,8 +84,8 @@ class MainActivity : ComponentActivity() {
                                 Button(onClick = {
                                     val view = jetCaptureView?.value!!
                                     scope.launch {
-                                        ImageUtils.generateBitmapFromView(view)
-                                            .saveToDisk(context)
+                                        captureBitmap(view)
+                                            ?.saveToDisk(context)
                                     }
                                     Toast.makeText(
                                         context,
@@ -133,8 +136,8 @@ class ComposeListView @JvmOverloads constructor(
         val scope = rememberCoroutineScope()
         val context = LocalContext.current
 
-        LazyColumn {
-            items(25) {
+        Column() {
+            for(it in 0..25) {
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.SpaceEvenly
@@ -216,4 +219,43 @@ fun getBitmapFromView(view: View, totalHeight: Int, totalWidth: Int): Bitmap {
     else canvas.drawColor(Color.WHITE)
     view.draw(canvas)
     return returnedBitmap
+}
+
+
+fun captureBitmap(view: View): Bitmap? {
+    var mlp = MarginLayoutParams(0, 0)
+
+    if (view.layoutParams is MarginLayoutParams) {
+        mlp = view.layoutParams as MarginLayoutParams
+    }
+
+    val parentWms = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+    val parentHms = MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED)
+    val wms = ViewGroup.getChildMeasureSpec(
+        parentWms,
+        view.paddingLeft + view.paddingRight + mlp.leftMargin + mlp.rightMargin,
+        view.layoutParams.width
+    )
+    val hms = ViewGroup.getChildMeasureSpec(
+        parentHms,
+        view.paddingTop + view.paddingBottom + mlp.topMargin + mlp.bottomMargin,
+        view.layoutParams.height
+    )
+    view.measure(wms, hms)
+
+    view.layout(0, 0, view.measuredWidth, view.measuredHeight)
+    if (view.measuredWidth <= 0 || view.measuredHeight <= 0) {
+        return null
+    }
+    val bitmap =
+        Bitmap.createBitmap(view.measuredWidth, view.measuredHeight, Bitmap.Config.ARGB_8888)
+    val canvas = Canvas(bitmap)
+
+    val bgDrawable = view.background
+    if (bgDrawable != null) bgDrawable.draw(canvas)
+    else canvas.drawColor(Color.WHITE)
+
+    view.draw(canvas)
+
+    return bitmap
 }
