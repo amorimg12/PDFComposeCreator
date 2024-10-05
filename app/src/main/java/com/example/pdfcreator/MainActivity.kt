@@ -28,6 +28,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.AccountBox
 import androidx.compose.material.icons.filled.Done
@@ -71,7 +73,7 @@ class MainActivity : ComponentActivity() {
                         Box(modifier = Modifier
                             .padding(innerPadding)
                             .fillMaxSize()) {
-                            Box{
+                            Column(modifier = Modifier.verticalScroll(rememberScrollState())){
                                 CreateViewUI()
                             }
                             Row(
